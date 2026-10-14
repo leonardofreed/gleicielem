@@ -46,7 +46,7 @@
         </div>
     </header>
 
-    <!-- Cupom de Desconto -->
+    <!-- Cupom de Desconto 
     <div class="p-4">
         <div class="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center justify-between">
             <div>
@@ -59,7 +59,7 @@
                 <span class="text-xl">R$10</span>
             </div>
         </div>
-    </div>
+    </div> -->
 
     <!-- Catálogo de Produtos -->
     <main class="px-4 pb-6">
@@ -110,6 +110,8 @@
                 <h4 class="font-bold text-sm mb-3 text-gray-700"><i class="fa-solid fa-location-dot text-red-600 mr-1"></i> Dados para Entrega</h4>
                 
                 <div class="space-y-2 mb-3">
+                    <input type="text" id="address-name" placeholder="Nome completo" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-red-500 outline-none">
+                    
                     <input type="tel" id="address-cep" placeholder="CEP (Ex: 01001-000)" maxlength="9" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none">
                     
                     <div id="cep-status" class="text-xs px-1 hidden"></div>
@@ -176,6 +178,7 @@
             { start: 1000000, end: 1999999, neighborhood: "Centro", fee: 5.00 },
             { start: 2000000, end: 2999999, neighborhood: "Jardim América", fee: 8.00 },
             { start: 3000000, end: 3999999, neighborhood: "Vila Nova", fee: 10.00 },
+            { start: 78076316, end: 78076316, neighborhood: "Chaudio Marchett", fee: 12.00 },
             // Adicione mais faixas conforme necessário
         ];
 
@@ -338,7 +341,8 @@
 
             // Verificar Pedido Mínimo e Endereço
             const isMinOrderValid = subtotal >= MIN_ORDER || cart.length === 0;
-            const isAddressValid = document.getElementById('address-cep').value.length === 9 && 
+            const isAddressValid = document.getElementById('address-name').value.trim() !== '' && 
+                                   document.getElementById('address-cep').value.length === 9 && 
                                    document.getElementById('address-street').value.trim() !== '' && 
                                    document.getElementById('address-number').value.trim() !== '' &&
                                    currentDeliveryFee !== null;
@@ -362,6 +366,7 @@
         function sendWhatsApp() {
             if (cart.length === 0) return;
 
+            const name = document.getElementById('address-name').value.trim();
             const cep = document.getElementById('address-cep').value;
             const street = document.getElementById('address-street').value.trim();
             const number = document.getElementById('address-number').value.trim();
@@ -369,8 +374,8 @@
             const reference = document.getElementById('address-reference').value.trim();
 
             // Validação final de segurança
-            if (!cep || !street || !number) {
-                alert("Por favor, preencha todos os campos obrigatórios do endereço (CEP, Rua e Número).");
+            if (!name || !cep || !street || !number) {
+                alert("Por favor, preencha todos os campos obrigatórios do endereço (Nome, CEP, Rua e Número).");
                 return;
             }
 
@@ -394,6 +399,7 @@
             message += `\n*TOTAL:* R$ ${total.toFixed(2).replace('.', ',')}`;
             
             message += `\n\n*DADOS PARA ENTREGA:*`;
+            message += `\n👤 Nome: ${name}`;
             message += `\n📍 Endereço: ${street}, ${number}`;
             if (complement) message += ` - ${complement}`;
             if (reference) message += `\n🔍 Ref: ${reference}`;
@@ -424,7 +430,7 @@
             updateCartUI();
 
             // Adicionar eventos de input para validação em tempo real do endereço
-            ['address-street', 'address-number'].forEach(id => {
+            ['address-name', 'address-street', 'address-number'].forEach(id => {
                 document.getElementById(id).addEventListener('input', updateCartUI);
             });
 
