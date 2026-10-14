@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Marmita Caseira - Catálogo</title>
+    
+    <!-- Tailwind CSS para estilização rápida -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <meta name="description" content="Catálogo e pedidos de marmitas caseiras com entrega rápida.">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Marmita Caseira">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .cart-modal { transition: transform 0.3s ease-in-out; }
+        .cart-modal.hidden { transform: translateY(100%); }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans pb-24">
+
+    <!-- Header / Informações da Loja -->
+    <header class="bg-white shadow-sm p-4 sticky top-0 z-10">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                <i class="fa-solid fa-utensils text-gray-500 text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg text-gray-900">Marmita Caseira</h1>
+                <p class="text-xs text-gray-500"><i class="fa-solid fa-motorcycle"></i> Entrega rastreável • 12.5 km • Min R$ 20,00</p>
+            </div>
+        </div>
+        
+        <div class="bg-black text-white text-center text-sm font-semibold py-2 rounded-lg mt-3">
+            <i class="fa-solid fa-clock"></i> Loja fechada • Abre amanhã às 10:00
+        </div>
+    </header>
+
+    <!-- Cupom de Desconto -->
+    <div class="p-4">
+        <div class="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-red-600 font-semibold">Cupom de Desconto iFood</p>
+                <p class="text-sm font-bold text-gray-800">Insira o código: <span class="bg-red-100 px-1 rounded">Restnovoe9czz6</span></p>
+                <p class="text-xs text-gray-500 mt-1">Ganhe R$ 10,00 de desconto na sua primeira compra!</p>
+            </div>
+            <div class="bg-red-600 text-white font-bold rounded-lg p-2 text-center min-w-[70px]">
+                <span class="text-xs block">Ganhe</span>
+                <span class="text-xl">R$10</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Catálogo de Produtos -->
+    <main class="px-4 pb-6">
+        <h2 class="font-bold text-lg text-gray-900 mb-4">Pratos Do Dia</h2>
+        <div class="space-y-4" id="product-list"></div>
+    </main>
+
+    <!-- Banner de Instalação do App -->
+    <div id="install-banner" class="hidden fixed bottom-20 left-4 right-4 bg-white border border-red-200 shadow-lg rounded-xl p-3 flex items-center gap-3 z-20">
+        <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0">
+            <img src="icon-192.png" alt="Ícone do app" class="w-full h-full object-cover">
+        </div>
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-bold text-gray-900 leading-tight">Instalar o app</p>
+            <p class="text-xs text-gray-500 leading-tight">Peça mais rápido pela tela inicial</p>
+        </div>
+        <button id="install-btn" class="bg-red-600 hover:bg-red-700 text-white text-sm font-bold px-3 py-2 rounded-lg transition-colors shrink-0">Instalar</button>
+        <button id="install-dismiss" class="text-gray-400 hover:text-gray-600 text-xl px-1 shrink-0" aria-label="Fechar">&times;</button>
+    </div>
+
+    <!-- Menu Inferior Fixo (Bottom Navigation) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center py-3 px-6 z-20">
+        <button class="flex flex-col items-center text-red-600" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+            <i class="fa-solid fa-house text-xl mb-1"></i>
+            <span class="text-xs font-semibold">Início</span>
+        </button>
+        <button class="flex flex-col items-center text-gray-400 relative" onclick="toggleCart()">
+            <i class="fa-solid fa-cart-shopping text-xl mb-1"></i>
+            <span class="text-xs font-semibold">Carrinho</span>
+            <span id="cart-badge" class="absolute -top-1 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+        </button>
+    </nav>
+
+    <!-- Modal do Carrinho -->
+    <div id="cart-modal" class="cart-modal hidden fixed inset-0 bg-black bg-opacity-50 z-30 flex flex-col justify-end">
+        <div class="bg-white w-full rounded-t-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b border-gray-100">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-cart-shopping text-red-600 mr-2"></i>Seu Pedido</h3>
+                <button onclick="toggleCart()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            
+            <div class="p-4 overflow-y-auto flex-1 no-scrollbar" id="cart-items">
+                <p class="text-center text-gray-400 py-8">Seu carrinho está vazio.</p>
+            </div>
+
+            <!-- Endereço de Entrega -->
+            <div class="p-4 border-t border-gray-200 bg-gray-50">
+                <h4 class="font-bold text-sm mb-3 text-gray-700"><i class="fa-solid fa-location-dot text-red-600 mr-1"></i> Dados para Entrega</h4>
+                
+                <div class="space-y-2 mb-3">
+                    <input type="tel" id="address-cep" placeholder="CEP (Ex: 01001-000)" maxlength="9" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none">
+                    
+                    <div id="cep-status" class="text-xs px-1 hidden"></div>
+
+                    <div class="flex gap-2">
+                        <input type="text" id="address-street" placeholder="Rua/Av." class="flex-1 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-red-500 outline-none">
+                        <input type="text" id="address-number" placeholder="Nº" class="w-20 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-red-500 outline-none">
+                    </div>
+                    <input type="text" id="address-complement" placeholder="Complemento (Apto, Bloco, etc)" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-red-500 outline-none">
+                    <input type="text" id="address-reference" placeholder="Ponto de Referência" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-red-500 outline-none">
+                </div>
+            </div>
+
+            <!-- Resumo de Valores -->
+            <div class="p-4 bg-white border-t border-gray-200 rounded-b-2xl">
+                <div class="flex justify-between items-center mb-1 text-sm text-gray-600">
+                    <span>Subtotal:</span>
+                    <span id="cart-subtotal">R$ 0,00</span>
+                </div>
+                <div class="flex justify-between items-center mb-2 text-sm text-gray-600">
+                    <span>Taxa de Entrega (<span id="delivery-neighborhood" class="font-semibold">--</span>):</span>
+                    <span id="delivery-fee">R$ 0,00</span>
+                </div>
+                <div class="flex justify-between items-center mb-4 pt-2 border-t border-gray-100">
+                    <span class="font-bold text-lg">Total:</span>
+                    <span class="font-bold text-lg text-red-600" id="cart-total">R$ 0,00</span>
+                </div>
+                
+                <button id="checkout-btn" onclick="sendWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors">
+                    <i class="fa-brands fa-whatsapp text-xl"></i> Finalizar no WhatsApp
+                </button>
+                <p id="min-order-alert" class="text-xs text-red-500 text-center mt-2 hidden">* Pedido mínimo de R$ 20,00</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================= DADOS DOS PRODUTOS =================
+        const products = [
+            {
+                id: 1,
+                name: "Marmita # media",
+                description: "Arroz, feijão, bife acebolado, batata frita, salada mista",
+                price: 25.00,
+                img: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"
+            },
+            {
+                id: 2,
+                name: "Marmita # media (Frango)",
+                description: "Frango assado, arroz, feijão, macarronada, salada mista",
+                price: 25.00,
+                img: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"
+            }
+        ];
+
+        // ================= CONFIGURAÇÕES =================
+        const WHATSAPP_NUMBER = "5500000000000"; // COLOQUE SEU NÚMERO AQUI
+        const MIN_ORDER = 20.00;
+
+        // ================= FAIXAS DE CEP PARA ENTREGA =================
+        // Configure aqui as faixas de CEP, o nome do bairro e o valor da taxa.
+        // O CEP deve ser um número inteiro (sem hífen ou pontos).
+        const deliveryZones = [
+            { start: 1000000, end: 1999999, neighborhood: "Centro", fee: 5.00 },
+            { start: 2000000, end: 2999999, neighborhood: "Jardim América", fee: 8.00 },
+            { start: 3000000, end: 3999999, neighborhood: "Vila Nova", fee: 10.00 },
+            // Adicione mais faixas conforme necessário
+        ];
+
+        let cart = [];
+        let currentDeliveryFee = 0;
+        let currentNeighborhood = "";
+
+        // ================= RENDERIZAR PRODUTOS =================
+        function renderProducts() {
+            const container = document.getElementById('product-list');
+            container.innerHTML = products.map(product => `
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-900">${product.name}</h3>
+                        <p class="text-sm text-gray-500 mt-1 leading-tight">${product.description}</p>
+                        <div class="mt-3 flex items-center justify-between">
+                            <span class="font-bold text-gray-900">R$ ${product.price.toFixed(2).replace('.', ',')}</span>
+                            <button onclick="addToCart(${product.id})" class="bg-red-50 text-red-600 p-2 rounded-lg hover:bg-red-100 transition-colors">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <img src="${product.img}" alt="${product.name}" class="w-24 h-24 rounded-lg object-cover">
+                </div>
+            `).join('');
+        }
+
+        // ================= LÓGICA DO CARRINHO =================
+        function addToCart(id) {
+            const product = products.find(p => p.id === id);
+            const existingItem = cart.find(item => item.id === id);
+
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+            
+            updateCartUI();
+            const badge = document.getElementById('cart-badge');
+            badge.classList.add('animate-bounce');
+            setTimeout(() => badge.classList.remove('animate-bounce'), 300);
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            updateCartUI();
+        }
+
+        function changeQuantity(id, delta) {
+            const item = cart.find(item => item.id === id);
+            if (item) {
+                item.quantity += delta;
+                if (item.quantity <= 0) {
+                    removeFromCart(id);
+                } else {
+                    updateCartUI();
+                }
+            }
+        }
+
+        // ================= CÁLCULO DE FRETE POR CEP =================
+        function calculateDeliveryFee() {
+            const cepInput = document.getElementById('address-cep').value.replace(/\D/g, '');
+            const statusEl = document.getElementById('cep-status');
+            const feeEl = document.getElementById('delivery-fee');
+            const neighborhoodEl = document.getElementById('delivery-neighborhood');
+
+            if (cepInput.length === 8) {
+                const cepNum = parseInt(cepInput, 10);
+                const zone = deliveryZones.find(z => cepNum >= z.start && cepNum <= z.end);
+                
+                if (zone) {
+                    statusEl.classList.remove('hidden', 'text-red-500');
+                    statusEl.classList.add('text-green-600');
+                    statusEl.innerHTML = `<i class="fa-solid fa-check-circle"></i> Entregamos no bairro ${zone.neighborhood}!`;
+                    
+                    currentDeliveryFee = zone.fee;
+                    currentNeighborhood = zone.neighborhood;
+                    
+                    feeEl.textContent = `R$ ${zone.fee.toFixed(2).replace('.', ',')}`;
+                    neighborhoodEl.textContent = zone.neighborhood;
+                } else {
+                    statusEl.classList.remove('hidden', 'text-green-600');
+                    statusEl.classList.add('text-red-500');
+                    statusEl.innerHTML = `<i class="fa-solid fa-times-circle"></i> Não entregamos neste CEP.`;
+                    
+                    currentDeliveryFee = null;
+                    currentNeighborhood = "";
+                    
+                    feeEl.textContent = `R$ 0,00`;
+                    neighborhoodEl.textContent = "Fora de área";
+                }
+            } else {
+                statusEl.classList.add('hidden');
+                currentDeliveryFee = 0;
+                currentNeighborhood = "";
+                feeEl.textContent = `R$ 0,00`;
+                neighborhoodEl.textContent = "--";
+            }
+            
+            updateCartUI();
+        }
+
+        // Máscara de CEP
+        document.getElementById('address-cep').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 5) {
+                value = value.replace(/^(\d{5})(\d)/, '$1-$2');
+            }
+            e.target.value = value;
+            calculateDeliveryFee();
+        });
+
+        // ================= ATUALIZAR UI DO CARRINHO =================
+        function updateCartUI() {
+            const cartBadge = document.getElementById('cart-badge');
+            const cartItemsContainer = document.getElementById('cart-items');
+            const subtotalEl = document.getElementById('cart-subtotal');
+            const totalEl = document.getElementById('cart-total');
+            const checkoutBtn = document.getElementById('checkout-btn');
+            const minOrderAlert = document.getElementById('min-order-alert');
+
+            // Atualizar Badge
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            if (totalItems > 0) {
+                cartBadge.textContent = totalItems;
+                cartBadge.classList.remove('hidden');
+            } else {
+                cartBadge.classList.add('hidden');
+            }
+
+            // Atualizar Lista de Itens
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = '<p class="text-center text-gray-400 py-8">Seu carrinho está vazio.</p>';
+            } else {
+                cartItemsContainer.innerHTML = cart.map(item => `
+                    <div class="flex items-center gap-3 py-3 border-b border-gray-100 last:border-0">
+                        <img src="${item.img}" class="w-12 h-12 rounded-md object-cover">
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-sm">${item.name}</h4>
+                            <p class="text-red-600 font-bold text-sm">R$ ${item.price.toFixed(2).replace('.', ',')}</p>
+                        </div>
+                        <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                            <button onclick="changeQuantity(${item.id}, -1)" class="w-6 h-6 flex items-center justify-center text-gray-600 font-bold">-</button>
+                            <span class="text-sm font-semibold w-4 text-center">${item.quantity}</span>
+                            <button onclick="changeQuantity(${item.id}, 1)" class="w-6 h-6 flex items-center justify-center text-gray-600 font-bold">+</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Calcular Valores
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const deliveryFee = currentDeliveryFee || 0;
+            const total = subtotal + deliveryFee;
+
+            subtotalEl.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+            totalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+
+            // Verificar Pedido Mínimo e Endereço
+            const isMinOrderValid = subtotal >= MIN_ORDER || cart.length === 0;
+            const isAddressValid = document.getElementById('address-cep').value.length === 9 && 
+                                   document.getElementById('address-street').value.trim() !== '' && 
+                                   document.getElementById('address-number').value.trim() !== '' &&
+                                   currentDeliveryFee !== null;
+
+            if (!isMinOrderValid) {
+                checkoutBtn.disabled = true;
+                checkoutBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                minOrderAlert.classList.remove('hidden');
+            } else if (cart.length > 0 && !isAddressValid) {
+                checkoutBtn.disabled = true;
+                checkoutBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                minOrderAlert.classList.add('hidden');
+            } else {
+                checkoutBtn.disabled = false;
+                checkoutBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                minOrderAlert.classList.add('hidden');
+            }
+        }
+
+        // ================= ENVIO PARA O WHATSAPP =================
+        function sendWhatsApp() {
+            if (cart.length === 0) return;
+
+            const cep = document.getElementById('address-cep').value;
+            const street = document.getElementById('address-street').value.trim();
+            const number = document.getElementById('address-number').value.trim();
+            const complement = document.getElementById('address-complement').value.trim();
+            const reference = document.getElementById('address-reference').value.trim();
+
+            // Validação final de segurança
+            if (!cep || !street || !number) {
+                alert("Por favor, preencha todos os campos obrigatórios do endereço (CEP, Rua e Número).");
+                return;
+            }
+
+            if (currentDeliveryFee === null) {
+                alert("Desculpe, não entregamos no CEP informado. Verifique o CEP ou entre em contato.");
+                return;
+            }
+
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const total = subtotal + (currentDeliveryFee || 0);
+            
+            let message = `*NOVO PEDIDO - Marmita Caseira*\n\n`;
+            message += `*Itens do Pedido:*\n`;
+            
+            cart.forEach(item => {
+                message += `▪️ ${item.quantity}x ${item.name} - R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}\n`;
+            });
+            
+            message += `\n*Subtotal:* R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+            message += `\n*Taxa de Entrega (${currentNeighborhood}):* R$ ${(currentDeliveryFee || 0).toFixed(2).replace('.', ',')}`;
+            message += `\n*TOTAL:* R$ ${total.toFixed(2).replace('.', ',')}`;
+            
+            message += `\n\n*DADOS PARA ENTREGA:*`;
+            message += `\n📍 Endereço: ${street}, ${number}`;
+            if (complement) message += ` - ${complement}`;
+            if (reference) message += `\n🔍 Ref: ${reference}`;
+            message += `\n📍 Bairro: ${currentNeighborhood}`;
+            message += `\n📍 CEP: ${cep}`;
+            
+            message += `\n\n*FORMA DE PAGAMENTO:*\n[Por favor, informe: Pix / Cartão / Dinheiro]`;
+
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+            
+            window.open(whatsappUrl, '_blank');
+        }
+
+        // ================= CONTROLE DO MODAL =================
+        function toggleCart() {
+            const modal = document.getElementById('cart-modal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) {
+                // Re-calcular frete ao abrir o modal, caso o cliente já tenha digitado
+                calculateDeliveryFee();
+            }
+        }
+
+        // ================= INICIALIZAÇÃO =================
+        document.addEventListener('DOMContentLoaded', () => {
+            renderProducts();
+            updateCartUI();
+
+            // Adicionar eventos de input para validação em tempo real do endereço
+            ['address-street', 'address-number'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateCartUI);
+            });
+
+            // Registrar Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registrado!', reg))
+                    .catch(err => console.log('Erro ao registrar Service Worker', err));
+            }
+
+            // ================= BANNER DE INSTALAÇÃO (PWA) =================
+            let deferredInstallPrompt = null;
+            const installBanner = document.getElementById('install-banner');
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredInstallPrompt = e;
+                if (localStorage.getItem('pwa-install-dismissed') !== '1') {
+                    installBanner.classList.remove('hidden');
+                }
+            });
+
+            document.getElementById('install-btn').addEventListener('click', async () => {
+                if (!deferredInstallPrompt) return;
+                deferredInstallPrompt.prompt();
+                const { outcome } = await deferredInstallPrompt.userChoice;
+                if (outcome === 'accepted' || outcome === 'dismissed') {
+                    localStorage.setItem('pwa-install-dismissed', '1');
+                }
+                deferredInstallPrompt = null;
+                installBanner.classList.add('hidden');
+            });
+
+            document.getElementById('install-dismiss').addEventListener('click', () => {
+                installBanner.classList.add('hidden');
+                localStorage.setItem('pwa-install-dismissed', '1');
+            });
+
+            window.addEventListener('appinstalled', () => {
+                deferredInstallPrompt = null;
+                installBanner.classList.add('hidden');
+                localStorage.setItem('pwa-install-dismissed', '1');
+            });
+        });
+    </script>
+</body>
+</html>
